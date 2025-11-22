@@ -1,1 +1,791 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Impara a suonare il pianoforte online con Piano Master - Riconoscimento note in tempo reale">
+    <title>Piano Master - Impara a Suonare il Pianoforte Online</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 32px;
+            font-weight: bold;
+        }
+
+        .stats {
+            display: flex;
+            gap: 20px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            padding: 15px 25px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .lessons-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .lesson-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid transparent;
+            border-radius: 10px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: white;
+            font-size: 16px;
+        }
+
+        .lesson-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .lesson-btn.active {
+            background: #10b981;
+            border-color: #059669;
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
+        }
+
+        .control-btn {
+            background: #10b981;
+            border: none;
+            border-radius: 10px;
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            color: white;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+
+        .control-btn:hover {
+            background: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+        }
+
+        .control-btn.listening {
+            background: #ef4444;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+        }
+
+        .control-btn.listening:hover {
+            background: #dc2626;
+            box-shadow: 0 8px 25px rgba(239, 68, 68, 0.4);
+        }
+
+        .notes-display {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+
+        .note-box {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 20px 30px;
+            border-radius: 10px;
+            font-size: 24px;
+            font-weight: bold;
+            transition: all 0.3s;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .note-box.current {
+            background: #10b981;
+            transform: scale(1.2);
+            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.5);
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1.2); }
+            50% { transform: scale(1.25); }
+        }
+
+        .note-box.completed {
+            background: rgba(59, 130, 246, 0.5);
+        }
+
+        .detected-note {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .detected-note-value {
+            font-size: 72px;
+            font-weight: bold;
+            color: #fbbf24;
+            text-shadow: 0 5px 20px rgba(251, 191, 36, 0.5);
+            animation: glow 2s ease-in-out infinite;
+        }
+
+        @keyframes glow {
+            0%, 100% { text-shadow: 0 5px 20px rgba(251, 191, 36, 0.5); }
+            50% { text-shadow: 0 10px 40px rgba(251, 191, 36, 0.8); }
+        }
+
+        .piano {
+            display: flex;
+            justify-content: center;
+            margin: 30px 0;
+            position: relative;
+        }
+
+        .piano-key {
+            position: relative;
+            cursor: pointer;
+            transition: all 0.1s;
+        }
+
+        .piano-key.white {
+            width: 50px;
+            height: 200px;
+            background: white;
+            border: 2px solid #333;
+            border-radius: 0 0 5px 5px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding-bottom: 10px;
+        }
+
+        .piano-key.white:hover {
+            background: #f0f0f0;
+        }
+
+        .piano-key.white.active {
+            background: #3b82f6;
+            transform: translateY(2px);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.6);
+        }
+
+        .piano-key.white.target {
+            box-shadow: 0 0 0 4px #10b981, 0 0 30px rgba(16, 185, 129, 0.5);
+            animation: targetPulse 1.5s infinite;
+        }
+
+        @keyframes targetPulse {
+            0%, 100% { box-shadow: 0 0 0 4px #10b981, 0 0 30px rgba(16, 185, 129, 0.5); }
+            50% { box-shadow: 0 0 0 6px #10b981, 0 0 40px rgba(16, 185, 129, 0.8); }
+        }
+
+        .key-label {
+            font-size: 12px;
+            font-weight: bold;
+            color: #666;
+        }
+
+        .instructions {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #10b981;
+        }
+
+        .instructions ol {
+            margin-left: 20px;
+            line-height: 1.8;
+        }
+
+        .user-input {
+            margin-bottom: 20px;
+        }
+
+        .user-input input {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 12px 15px;
+            color: white;
+            font-size: 16px;
+            width: 100%;
+            max-width: 300px;
+            transition: all 0.3s;
+        }
+
+        .user-input input:focus {
+            outline: none;
+            border-color: #10b981;
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .user-input input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .status-message {
+            text-align: center;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-weight: bold;
+            display: none;
+        }
+
+        .status-message.success {
+            background: rgba(16, 185, 129, 0.2);
+            border: 2px solid #10b981;
+            color: #10b981;
+        }
+
+        .status-message.error {
+            background: rgba(239, 68, 68, 0.2);
+            border: 2px solid #ef4444;
+            color: #ef4444;
+        }
+
+        @media (max-width: 768px) {
+            .piano-key.white {
+                width: 40px;
+                height: 160px;
+            }
+            
+            .logo {
+                font-size: 24px;
+            }
+            
+            .stat-card {
+                padding: 10px 15px;
+            }
+            
+            .detected-note-value {
+                font-size: 48px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">
+                🎹 Piano Master
+            </div>
+            <div class="stats">
+                <div class="stat-card">
+                    <div>🏆 Punteggio</div>
+                    <div class="stat-value" id="score">0</div>
+                </div>
+                <div class="stat-card">
+                    <div>🔥 Streak</div>
+                    <div class="stat-value" id="streak">0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Messaggio di stato -->
+        <div class="status-message" id="statusMessage"></div>
+
+        <!-- Nome utente -->
+        <div class="card">
+            <div class="user-input">
+                <label style="font-weight: bold; margin-bottom: 10px; display: block;">Il tuo nome:</label>
+                <input type="text" id="userName" placeholder="Inserisci il tuo nome" maxlength="20">
+            </div>
+        </div>
+
+        <!-- Selezione Lezione -->
+        <div class="card">
+            <div class="card-title">📚 Seleziona Lezione</div>
+            <div class="lessons-grid" id="lessonsGrid"></div>
+        </div>
+
+        <!-- Area Pratica -->
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
+                <div class="card-title" style="margin: 0;">🎵 Pratica</div>
+                <button class="control-btn" id="startBtn" onclick="toggleListening()">
+                    ▶️ Inizia
+                </button>
+            </div>
+
+            <div>
+                <h3 style="margin-bottom: 10px;">Note da suonare:</h3>
+                <div class="notes-display" id="notesDisplay"></div>
+            </div>
+
+            <div class="detected-note" id="detectedNoteContainer" style="display: none;">
+                <div style="font-size: 18px; margin-bottom: 10px;">Nota rilevata:</div>
+                <div class="detected-note-value" id="detectedNote">---</div>
+            </div>
+
+            <div class="piano" id="piano"></div>
+        </div>
+
+        <!-- Istruzioni -->
+        <div class="card instructions">
+            <h3 style="margin-bottom: 15px;">📖 Come usare:</h3>
+            <ol>
+                <li>Inserisci il tuo nome per salvare i progressi su Firebase</li>
+                <li>Seleziona una lezione sopra</li>
+                <li>Clicca "Inizia" e permetti l'accesso al microfono</li>
+                <li>Suona le note evidenziate in verde sulla tua tastiera o strumento</li>
+                <li>I tuoi progressi vengono salvati automaticamente ogni 30 secondi</li>
+            </ol>
+        </div>
+
+        <!-- Footer -->
+        <div style="text-align: center; margin-top: 40px; opacity: 0.8;">
+            <p>💾 I dati vengono salvati su Firebase Realtime Database</p>
+            <p style="margin-top: 10px;">🎹 Creato con Web Audio API</p>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+
+    <script>
+        // ===== CONFIGURAZIONE FIREBASE =====
+        const firebaseConfig = {
+            apiKey: "AIzaSyChRPCNDhqiZ_ig6RKr2Akq5PAi_LgJfLE",
+            authDomain: "piano-master-7d3c2.firebaseapp.com",
+            databaseURL: "https://piano-master-7d3c2-default-rtdb.firebaseio.com",
+            projectId: "piano-master-7d3c2",
+            storageBucket: "piano-master-7d3c2.firebasestorage.app",
+            messagingSenderId: "895778267278",
+            appId: "1:895778267278:web:45d4857574632d88a1e9df"
+        };
+
+        // ===== INIZIALIZZAZIONE FIREBASE =====
+        let db, auth, userId;
+        let firebaseInitialized = false;
+
+        function showStatus(message, type) {
+            const statusEl = document.getElementById('statusMessage');
+            statusEl.textContent = message;
+            statusEl.className = `status-message ${type}`;
+            statusEl.style.display = 'block';
+            setTimeout(() => {
+                statusEl.style.display = 'none';
+            }, 3000);
+        }
+
+        try {
+            firebase.initializeApp(firebaseConfig);
+            db = firebase.database();
+            auth = firebase.auth();
+            
+            auth.signInAnonymously()
+                .then((result) => {
+                    userId = result.user.uid;
+                    firebaseInitialized = true;
+                    console.log('Firebase connesso! User ID:', userId);
+                    showStatus('✅ Connesso a Firebase!', 'success');
+                    loadUserData();
+                })
+                .catch((error) => {
+                    console.error('Errore autenticazione:', error);
+                    showStatus('⚠️ Firebase non disponibile. L\'app funzionerà senza salvataggio.', 'error');
+                });
+        } catch (error) {
+            console.error('Errore inizializzazione Firebase:', error);
+            showStatus('⚠️ Errore Firebase. Verifica la configurazione.', 'error');
+        }
+
+        // ===== STATO APPLICAZIONE =====
+        let isListening = false;
+        let score = 0;
+        let streak = 0;
+        let currentLessonIndex = 0;
+        let currentNoteIndex = 0;
+        let audioContext = null;
+        let analyser = null;
+        let animationFrame = null;
+        let lastCorrectNote = null;
+        let correctNoteTimeout = null;
+
+        const lessons = [
+            { id: 1, name: "Le Basi - C, D, E", notes: ['C4', 'D4', 'E4'], level: 1 },
+            { id: 2, name: "Scala C Major", notes: ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5'], level: 2 },
+            { id: 3, name: "Twinkle Twinkle", notes: ['C4', 'C4', 'G4', 'G4', 'A4', 'A4', 'G4'], level: 3 },
+            { id: 4, name: "Accordi Base", notes: ['C4', 'E4', 'G4', 'C5'], level: 4 }
+        ];
+
+        const noteFrequencies = {
+            'C4': 261.63, 'D4': 293.66, 'E4': 329.63, 'F4': 349.23,
+            'G4': 392.00, 'A4': 440.00, 'B4': 493.88, 'C5': 523.25
+        };
+
+        const pianoKeys = ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5'];
+
+        // ===== INIZIALIZZAZIONE UI =====
+        function initUI() {
+            const lessonsGrid = document.getElementById('lessonsGrid');
+            lessons.forEach((lesson, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'lesson-btn';
+                btn.innerHTML = `<strong>${lesson.name}</strong><br><small>Livello ${lesson.level}</small>`;
+                btn.onclick = () => selectLesson(index);
+                if (index === 0) btn.classList.add('active');
+                lessonsGrid.appendChild(btn);
+            });
+
+            const piano = document.getElementById('piano');
+            pianoKeys.forEach(note => {
+                const key = document.createElement('div');
+                key.className = 'piano-key white';
+                key.innerHTML = `<span class="key-label">${note}</span>`;
+                key.id = `key-${note}`;
+                piano.appendChild(key);
+            });
+
+            updateNotesDisplay();
+        }
+
+        // ===== GESTIONE LEZIONI =====
+        function selectLesson(index) {
+            currentLessonIndex = index;
+            currentNoteIndex = 0;
+            
+            document.querySelectorAll('.lesson-btn').forEach((btn, i) => {
+                btn.classList.toggle('active', i === index);
+            });
+            
+            updateNotesDisplay();
+        }
+
+        function updateNotesDisplay() {
+            const notesDisplay = document.getElementById('notesDisplay');
+            notesDisplay.innerHTML = '';
+            
+            const currentLesson = lessons[currentLessonIndex];
+            currentLesson.notes.forEach((note, index) => {
+                const noteBox = document.createElement('div');
+                noteBox.className = 'note-box';
+                noteBox.textContent = note;
+                
+                if (index === currentNoteIndex) {
+                    noteBox.classList.add('current');
+                } else if (index < currentNoteIndex) {
+                    noteBox.classList.add('completed');
+                }
+                
+                notesDisplay.appendChild(noteBox);
+            });
+
+            updatePianoHighlight();
+        }
+
+        function updatePianoHighlight() {
+            document.querySelectorAll('.piano-key').forEach(key => {
+                key.classList.remove('target');
+            });
+
+            const currentLesson = lessons[currentLessonIndex];
+            const targetNote = currentLesson.notes[currentNoteIndex];
+            const targetKey = document.getElementById(`key-${targetNote}`);
+            if (targetKey) {
+                targetKey.classList.add('target');
+            }
+        }
+
+        // ===== AUDIO DETECTION =====
+        async function toggleListening() {
+            const btn = document.getElementById('startBtn');
+            
+            if (!isListening) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    const source = audioContext.createMediaStreamSource(stream);
+                    analyser = audioContext.createAnalyser();
+                    analyser.fftSize = 4096;
+                    source.connect(analyser);
+                    
+                    isListening = true;
+                    btn.innerHTML = '⏸️ Stop';
+                    btn.classList.add('listening');
+                    document.getElementById('detectedNoteContainer').style.display = 'block';
+                    
+                    showStatus('🎤 Microfono attivo!', 'success');
+                    detectPitch();
+                } catch (err) {
+                    console.error('Errore microfono:', err);
+                    showStatus('❌ Permetti l\'accesso al microfono per continuare', 'error');
+                }
+            } else {
+                isListening = false;
+                btn.innerHTML = '▶️ Inizia';
+                btn.classList.remove('listening');
+                document.getElementById('detectedNoteContainer').style.display = 'none';
+                
+                if (animationFrame) cancelAnimationFrame(animationFrame);
+                if (audioContext) audioContext.close();
+                
+                showStatus('🎵 Pratica in pausa', 'success');
+            }
+        }
+
+        function detectPitch() {
+            if (!analyser || !isListening) return;
+
+            const bufferLength = analyser.fftSize;
+            const buffer = new Float32Array(bufferLength);
+            analyser.getFloatTimeDomainData(buffer);
+
+            const frequency = autoCorrelate(buffer, audioContext.sampleRate);
+            
+            if (frequency > -1) {
+                const note = frequencyToNote(frequency);
+                if (note) {
+                    displayDetectedNote(note);
+                    checkNote(note);
+                }
+            }
+
+            animationFrame = requestAnimationFrame(detectPitch);
+        }
+
+        function autoCorrelate(buffer, sampleRate) {
+            const size = buffer.length;
+            const maxSamples = Math.floor(size / 2);
+            let bestOffset = -1;
+            let bestCorrelation = 0;
+            let rms = 0;
+
+            for (let i = 0; i < size; i++) {
+                rms += buffer[i] * buffer[i];
+            }
+            rms = Math.sqrt(rms / size);
+            
+            if (rms < 0.01) return -1;
+
+            for (let offset = 1; offset < maxSamples; offset++) {
+                let correlation = 0;
+                for (let i = 0; i < maxSamples; i++) {
+                    correlation += Math.abs(buffer[i] - buffer[i + offset]);
+                }
+                correlation = 1 - (correlation / maxSamples);
+                
+                if (correlation > 0.9 && correlation > bestCorrelation) {
+                    bestCorrelation = correlation;
+                    bestOffset = offset;
+                }
+            }
+            
+            if (bestCorrelation > 0.01) {
+                return sampleRate / bestOffset;
+            }
+            return -1;
+        }
+
+        function frequencyToNote(frequency) {
+            const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+            const A4 = 440;
+            const C0 = A4 * Math.pow(2, -4.75);
+            
+            if (frequency < 50) return null;
+            
+            const h = Math.round(12 * Math.log2(frequency / C0));
+            const octave = Math.floor(h / 12);
+            const n = h % 12;
+            
+            return notes[n] + octave;
+        }
+
+        function displayDetectedNote(note) {
+            document.getElementById('detectedNote').textContent = note || '---';
+            
+            document.querySelectorAll('.piano-key').forEach(key => {
+                key.classList.remove('active');
+            });
+            
+            if (note) {
+                const keyElement = document.getElementById(`key-${note}`);
+                if (keyElement) {
+                    keyElement.classList.add('active');
+                }
+            }
+        }
+
+        function checkNote(note) {
+            const currentLesson = lessons[currentLessonIndex];
+            const targetNote = currentLesson.notes[currentNoteIndex];
+            
+            // Previeni detection multiple della stessa nota
+            if (note === lastCorrectNote && correctNoteTimeout) return;
+            
+            if (note === targetNote) {
+                lastCorrectNote = note;
+                score += 10;
+                streak++;
+                updateStats();
+                
+                // Timeout per evitare detection multiple
+                correctNoteTimeout = setTimeout(() => {
+                    lastCorrectNote = null;
+                }, 500);
+                
+                setTimeout(() => {
+                    if (currentNoteIndex < currentLesson.notes.length - 1) {
+                        currentNoteIndex++;
+                        updateNotesDisplay();
+                    } else {
+                        showStatus('🎉 Lezione completata! Ottimo lavoro!', 'success');
+                        saveProgress();
+                        currentNoteIndex = 0;
+                        updateNotesDisplay();
+                    }
+                }, 300);
+            }
+        }
+
+        function updateStats() {
+            document.getElementById('score').textContent = score;
+            document.getElementById('streak').textContent = streak;
+        }
+
+        // ===== FIREBASE FUNCTIONS =====
+        function saveProgress() {
+            if (!firebaseInitialized || !userId) {
+                console.log('Firebase non disponibile, salvataggio saltato');
+                return;
+            }
+            
+            const userName = document.getElementById('userName').value.trim() || 'Anonimo';
+            
+            const userData = {
+                name: userName,
+                score: score,
+                streak: streak,
+                currentLesson: currentLessonIndex,
+                lastPlayed: new Date().toISOString(),
+                completedLessons: currentNoteIndex === lessons[currentLessonIndex].notes.length - 1 ? 
+                    (currentLessonIndex + 1) : currentLessonIndex
+            };
+
+            db.ref(`users/${userId}`).set(userData)
+                .then(() => {
+                    console.log('Dati salvati su Firebase!');
+                    return db.ref(`leaderboard/${userId}`).set({
+                        name: userName,
+                        score: score
+                    });
+                })
+                .then(() => {
+                    showStatus('💾 Progresso salvato!', 'success');
+                })
+                .catch((error) => {
+                    console.error('Errore salvataggio:', error);
+                    showStatus('⚠️ Errore nel salvataggio', 'error');
+                });
+        }
+
+        function loadUserData() {
+            if (!firebaseInitialized || !userId) return;
+            
+            db.ref(`users/${userId}`).once('value')
+                .then((snapshot) => {
+                    const data = snapshot.val();
+                    if (data) {
+                        score = data.score || 0;
+                        streak = data.streak || 0;
+                        if (data.currentLesson !== undefined) {
+                            selectLesson(data.currentLesson);
+                        }
+                        if (data.name && data.name !== 'Anonimo') {
+                            document.getElementById('userName').value = data.name;
+                        }
+                        updateStats();
+                        showStatus('📂 Dati caricati da Firebase!', 'success');
+                    }
+                })
+                .catch((error) => {
+                    console.error('Errore caricamento:', error);
+                });
+        }
+
+        // Auto-save ogni 30 secondi
+        setInterval(() => {
+            if (isListening && userId && firebaseInitialized) {
+                saveProgress();
+            }
+        }, 30000);
+
+        // Salva quando l'utente cambia nome
+        document.getElementById('userName').addEventListener('change', () => {
+            if (firebaseInitialized) {
+                saveProgress();
+            }
+        });
+
+        // ===== INIZIALIZZAZIONE =====
+        window.onload = initUI;
+
+        // Previeni chiusura accidentale durante la pratica
+        window.addEventListener('beforeunload', (e) => {
+            if (isListening && firebaseInitialized) {
+                saveProgress();
+            }
+        });
+    </script>
+</body>
+</html>
